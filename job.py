@@ -328,19 +328,21 @@ class Job(object):
        	shutil.rmtree(self.output_dir_hls)
        	# delete MP4 directory with all of its contents
        	shutil.rmtree(self.output_dir_mp4)
-	#  to don't stop the script the exceptions were added in the case that the files doesn't exist
-	try:
-        	os.remove(self.ios_playlist)
-	except OSError:
-               	pass
-	try:
-        	os.remove(self.web_playlist)
-	except OSError:
-               	pass
-	try:
-        	os.remove(self.fileName)
-	except OSError:
-		pass
+        # the exceptions were added in the case that the files doesn't exist
+	    try:
+            os.remove(self.ios_playlist)
+	    except OSError:
+            pass
+        
+        try:
+            os.remove(self.web_playlist)
+        except OSError:
+            pass
+        
+        try:
+            os.remove(self.fileName)
+        except OSError:
+            pass
 
     def __str__(self):
         print self.id, self.status, self.fileName, self.downloadPath, self.downloadHostname, self.output_dir_hls

@@ -324,12 +324,13 @@ class Job(object):
         
     def cleanup(self):
         logging.info('Job: Cleaning up')
-       	# delete HLS directory with all of its contents
-       	shutil.rmtree(self.output_dir_hls)
-       	# delete MP4 directory with all of its contents
-       	shutil.rmtree(self.output_dir_mp4)
+        # delete HLS directory with all of its contents
+        shutil.rmtree(self.output_dir_hls)
+        # delete MP4 directory with all of its contents
+        shutil.rmtree(self.output_dir_mp4)
         # the exceptions were added in the case that the files doesn't exist
-	    try:
+        
+        try:
             os.remove(self.ios_playlist)
 	    except OSError:
             pass

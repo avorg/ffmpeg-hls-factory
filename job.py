@@ -251,7 +251,7 @@ class Job(object):
             logging.info('S3 TRANSFER: HLS PREPARE DATA')
             # Transfer HLS
             for (self.output_dir_hls, dirname, filename) in os.walk(self.output_dir_hls):
-                upload_file_names.extend(unicode(filename).encode('utf-8'))
+                upload_file_names.extend(filename)
                 break
 
             logging.info('S3 TRANSFER: HLS UPLOAD DATA')
@@ -268,7 +268,7 @@ class Job(object):
             # Transfer MP4
             upload_file_names = []
             for (self.output_dir_mp4, dirname, filename) in os.walk(self.output_dir_mp4):
-                upload_file_names.extend(unicode(filename).encode('utf-8'))
+                upload_file_names.extend(filename)
                 break
 
             logging.info('S3 TRANSFER: MP4 UPLOAD DATA')
@@ -324,13 +324,23 @@ class Job(object):
         
     def cleanup(self):
         logging.info('Job: Cleaning up')
-        # delete HLS directory with all of its contents
-        shutil.rmtree(self.output_dir_hls)
-        # delete MP4 directory with all of its contents
-        shutil.rmtree(self.output_dir_mp4)
-        os.remove(self.ios_playlist)
-        os.remove(self.web_playlist)
-        os.remove(self.fileName)
+       	# delete HLS directory with all of its contents
+       	shutil.rmtree(self.output_dir_hls)
+       	# delete MP4 directory with all of its contents
+       	shutil.rmtree(self.output_dir_mp4)
+	#  to don't stop the script the exceptions were added in the case that the files doesn't exist
+	try:
+        	os.remove(self.ios_playlist)
+	except OSError:
+               	pass
+	try:
+        	os.remove(self.web_playlist)
+	except OSError:
+               	pass
+	try:
+        	os.remove(self.fileName)
+	except OSError:
+		pass
 
     def __str__(self):
         print self.id, self.status, self.fileName, self.downloadPath, self.downloadHostname, self.output_dir_hls

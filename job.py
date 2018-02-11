@@ -332,7 +332,7 @@ class Job(object):
         
         try:
             os.remove(self.ios_playlist)
-	    except OSError:
+        except OSError:
             pass
         
         try:

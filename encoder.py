@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 def main():
 
-    init('/home/ec2-user/settings.ini')
+    init('settings.ini')
     # First check if the script is already running
     pid = str(os.getpid())
     pid_file = "/tmp/encoder.pid"

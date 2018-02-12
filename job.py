@@ -7,7 +7,7 @@ class Job(object):
     def __init__(self):
 
         config = ConfigParser.ConfigParser()
-        config.read('/home/ec2-user/settings.ini')
+        config.read('settings.ini')
 
         self.id = 0
         self.status = 'Unknown'

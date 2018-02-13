@@ -11,7 +11,7 @@ class ApiManager(object):
     def __init__(self):
 
         config = ConfigParser.ConfigParser()
-        config.read('/home/ec2-user/settings.ini')
+        config.read('settings.ini')
         self.api_url = config.get('MasterAPI', 'URL')
         self.api_username = config.get('MasterAPI', 'Username')
         self.api_password = config.get('MasterAPI', 'Password')

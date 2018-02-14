@@ -132,7 +132,7 @@ class Job(object):
         media_info = self.probe_media_file(self.fileName)
         width = 1920
         self.mp4_file_name, file_extension = os.path.splitext(self.fileName)
-        file_extension = '.mp4'
+        # file_extension = '.mp4'
 
         if 'width' in media_info:
             width = int(media_info['width'])
@@ -141,25 +141,39 @@ class Job(object):
 
             if width >= self.mp4_config[key]['width']:
                 logging.info('GENERATE MP4: generating %s' % (key))
-                cmd = (self.mp4_config[key]['profile'] % (
-                    self.ffmpeg,
-                    self.fileName,
-                    self.audio_encoder,
-                    self.output_dir_mp4+self.mp4_file_name+'_'+key)
-                ).split()
 
-                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err = p.communicate()
+                # if the file is the same width and is mp4 don't encode, just use the same file
+                if self.mp4_config[key]['width'] > width or file_extension != '.mp4':
+                    cmd = (self.mp4_config[key]['profile'] % (
+                        self.ffmpeg,
+                        self.fileName,
+                        self.audio_encoder,
+                        self.output_dir_mp4+self.mp4_file_name+'_'+key)
+                    ).split()
 
-                if p.returncode:
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    out, err = p.communicate()
+                else:
+                    logging.info('GENERATE MP4: Skipping same width as the original %s (input movie is %s)' % (key, width))
+                    p = {}
+                    out = {}
+
+                if hasattr(p, 'returncode') and p.returncode:
                     logging.info('GENERATE MP4: ffmpeg failed out %s err %s' % (out, err))
                 else:
                     logging.info('GENERATE MP4: check in')
-                    file_path = self.output_dir_mp4 + self.mp4_file_name + '_' + key + file_extension
-                    media_info = self.probe_media_file(file_path)
+
+                    if self.mp4_config[key]['width'] > width or file_extension != '.mp4':
+                        file_path = self.output_dir_mp4 + self.mp4_file_name + '_' + key + file_extension
+                        media_info = self.probe_media_file(file_path)
+                        file_name = unicode(self.mp4_file_name + '_' + key + file_extension).encode('utf-8')
+                    else:
+                        file_path = self.fileName
+                        file_name = unicode(self.fileName).encode('utf-8')
+                    
                     api.checkin_flavor({
                         'recordingId': self.recordingId,
-                        'filename': unicode(self.mp4_file_name + '_' + key + file_extension).encode('utf-8'),
+                        'filename': file_name,
                         'filesize': os.path.getsize(file_path),
                         'duration': round(float(media_info['duration']), 1),
                         'bitrate': media_info['bit_rate'],

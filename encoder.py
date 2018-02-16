@@ -14,6 +14,9 @@ from datetime import datetime, timedelta
 
 def main():
 
+    # change current working directory, usfeul when the script is executed by the cron job
+    os.chdir('/home/ec2-user/ffmpeg-hls-factory/')
+
     init('settings.ini')
     # First check if the script is already running
     pid = str(os.getpid())

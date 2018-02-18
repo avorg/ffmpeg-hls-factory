@@ -24,17 +24,17 @@ def main():
 
     if os.path.isfile(pid_file):
 
-        #hours_ago = datetime.now() - timedelta(hours=12)
-        #file_time = datetime.fromtimestamp(os.path.getctime(pid_file))
+        hours_ago = datetime.now() - timedelta(hours=16)
+        file_time = datetime.fromtimestamp(os.path.getctime(pid_file))
 
-        #if file_time < hours_ago:
+        if file_time < hours_ago:
             # pid too old, delete
-            #logging.info("%s is stale removed" % pid_file)
-            #os.remove(pid_file)
-        #else:
+            logging.info("%s is stale removed" % pid_file)
+            os.remove(pid_file)
+        else:
             # encoder is still running
-        logging.warning("%s already exists, exiting" % pid_file)
-        sys.exit()
+            logging.warning("%s already exists, exiting" % pid_file)
+            sys.exit()
 
     file(pid_file, 'w').write(pid)
 

@@ -50,10 +50,11 @@ def main():
             job.generate_hls(api)
             job.generate_mp4(api)
             job.transfer_S3()
-            job.cleanup()
         except Exception as e:
             job.status = 'Job Error: ' + e.__str__()
+        
         api.checkin_job(job)
+        job.cleanup()
         logging.info("### JOB END ###")
 
     os.unlink(pid_file)

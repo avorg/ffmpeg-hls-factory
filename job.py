@@ -131,8 +131,8 @@ class Job(object):
         logging.info('GENERATE MP4: Begin')
         media_info = self.probe_media_file(self.fileName)
         width = 1920
-        self.mp4_file_name, file_extension = os.path.splitext(self.fileName)
-        # file_extension = '.mp4'
+        self.mp4_file_name, current_file_extension = os.path.splitext(self.fileName)
+        file_extension = '.mp4'
 
         if 'width' in media_info:
             width = int(media_info['width'])
@@ -143,7 +143,7 @@ class Job(object):
                 logging.info('GENERATE MP4: generating %s' % (key))
 
                 # if the file is the same width and is mp4 don't encode, just use the same file
-                if width > self.mp4_config[key]['width'] or file_extension != '.mp4':
+                if width > self.mp4_config[key]['width'] or current_file_extension != '.mp4':
                     cmd = (self.mp4_config[key]['profile'] % (
                         self.ffmpeg,
                         self.fileName,
@@ -163,7 +163,7 @@ class Job(object):
                 else:
                     logging.info('GENERATE MP4: check in')
 
-                    if width > self.mp4_config[key]['width'] or file_extension != '.mp4':
+                    if width > self.mp4_config[key]['width'] or current_file_extension != '.mp4':
                         file_path = self.output_dir_mp4 + self.mp4_file_name + '_' + key + file_extension
                         media_info = self.probe_media_file(file_path)
                         file_name = unicode(self.mp4_file_name + '_' + key + file_extension).encode('utf-8')

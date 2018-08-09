@@ -121,10 +121,15 @@ class Job(object):
                 #print out, err
             else:
                 logging.info('GENERATE HLS: skipping %s (input movie is %s)' % (key, width))
+
+        logging.info('GENERATE HLS: END')
+
+        # transfer to S3
+        self.transfer_S3(self.output_dir_hls, self.destinationURL + self.remote_dir_hls)
+
         # generate index m3u8
         self.write_ios_playlist(api)
         self.write_web_playlist(api)
-        logging.info('GENERATE HLS: END')
 
     def generate_mp4(self, api):
 
@@ -186,6 +191,9 @@ class Job(object):
 
         logging.info('GENERATE MP4: End')
 
+        # transfer to S3
+        self.transfer_S3(self.output_dir_mp4, self.destinationURL)
+
     def write_ios_playlist(self, api):
 
         logging.info('WRITE IOS PLAYLIST: BEGIN')
@@ -207,6 +215,9 @@ class Job(object):
                 f.write(self.remote_dir_hls+key+'_.m3u8\n')
 
         f.close()
+
+        self.transfer_S3_playlist(self.ios_playlist)
+
         logging.info('WRITE IOS PLAYLIST: checkin flavor')
         api.checkin_flavor({
             'recordingId': self.recordingId,
@@ -222,6 +233,7 @@ class Job(object):
 
     def write_web_playlist(self, api):
 
+        logging.info('WRITE WEB PLAYLIST: BEGIN')
         media_info = self.probe_media_file(self.fileName)
         width = 1920
 
@@ -242,6 +254,9 @@ class Job(object):
 
         f.close()
 
+        self.transfer_S3_playlist(self.web_playlist)
+
+        logging.info('WRITE WEB PLAYLIST: checkin flavor')
         api.checkin_flavor({
             'recordingId': self.recordingId,
             'filename': unicode(self.web_playlist).encode('utf-8'),
@@ -252,63 +267,47 @@ class Job(object):
             'height': media_info['height'],
             'container': 'm3u8_web'
         })
+        logging.info('WRITE IOS PLAYLIST: ios playlist %s generated'%(self.web_playlist))
 
-        logging.info('GENERATE HLS:: web playlist %s generated'%(self.web_playlist))
-
-    def transfer_S3(self):
-        # destination directory name (on s3)
-        upload_file_names = []
+    def transfer_S3_playlist(self, fileName):
         try:
-            logging.info('S3 TRANSFER: uploading files to bucket %s' % (self.s3_bucket))
+            logging.info('S3 TRANSFER PLAYLIST: uploading files to bucket %s' % (self.s3_bucket))
             conn = boto.connect_s3(self.s3_access,self.s3_secret)
             bucket = conn.get_bucket(self.s3_bucket)
-            logging.info('S3 TRANSFER: HLS PREPARE DATA')
-            # Transfer HLS
-            for (self.output_dir_hls, dirname, filename) in os.walk(self.output_dir_hls):
-                upload_file_names.extend(filename)
-                break
 
-            logging.info('S3 TRANSFER: HLS UPLOAD DATA')
-            for filename in upload_file_names:
-                source_path = os.path.join(self.output_dir_hls + filename)
-                dest_path = os.path.join(self.destinationURL + self.remote_dir_hls, filename)
-
-                k = boto.s3.key.Key(bucket)
-                k.key = dest_path
-                k.set_contents_from_filename(source_path)
-                k.set_acl('public-read')
-
-            logging.info('S3 TRANSFER: MP4 PREPARE DATA')
-            # Transfer MP4
-            upload_file_names = []
-            for (self.output_dir_mp4, dirname, filename) in os.walk(self.output_dir_mp4):
-                upload_file_names.extend(filename)
-                break
-
-            logging.info('S3 TRANSFER: MP4 UPLOAD DATA')
-            for filename in upload_file_names:
-                source_path = os.path.join(self.output_dir_mp4 + filename)
-                dest_path = os.path.join(self.destinationURL, filename)
-
-                k = boto.s3.key.Key(bucket)
-                k.key = dest_path
-                k.set_contents_from_filename(source_path)
-                k.set_acl('public-read')
-
-            logging.info('S3 TRANSFER: IOS PLAYLIST')
+            logging.info('S3 TRANSFER: PLAYLIST')
             # Upload index playlist
             k = boto.s3.key.Key(bucket)
-            k.key = os.path.join(self.destinationURL, self.ios_playlist)
-            k.set_contents_from_filename(os.path.join(self.ios_playlist))
+            k.key = os.path.join(self.destinationURL, fileName)
+            k.set_contents_from_filename(os.path.join(fileName))
             k.set_acl('public-read')
 
-            logging.info('S3 TRANSFER: IOS WEB PLAYLIST')
-            k = boto.s3.key.Key(bucket)
-            k.key = os.path.join(self.destinationURL, self.web_playlist)
-            k.set_contents_from_filename(os.path.join(self.web_playlist))
-            k.set_acl('public-read')
-            # update job status
-            self.status = 'OK'
+        except boto.exception.S3ResponseError as e:
+            # 403 Forbidden, 404 Not Found
+            logging.error(e)
+            raise Exception('S3 TRANSFER: error: ' + e)
+
+        logging.info('S3 TRANSFER END')
+
+    def transfer_S3(self, output_dir, destination):
+        try:
+            logging.info('S3 TRANSFER %s: uploading files to bucket %s' % (output_dir, self.s3_bucket))
+            conn = boto.connect_s3(self.s3_access,self.s3_secret)
+            bucket = conn.get_bucket(self.s3_bucket)
+
+            upload_file_names = []
+            for (output_dir, dirname, filename) in os.walk(output_dir):
+                upload_file_names.extend(filename)
+                break
+
+            for filename in upload_file_names:
+                source_path = os.path.join(output_dir + filename)
+                dest_path = os.path.join(destination, filename)
+
+                k = boto.s3.key.Key(bucket)
+                k.key = dest_path
+                k.set_contents_from_filename(source_path)
+                k.set_acl('public-read')
 
         except boto.exception.S3ResponseError as e:
             # 403 Forbidden, 404 Not Found

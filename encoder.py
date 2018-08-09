@@ -43,7 +43,7 @@ def main():
             job.generate_mp4(api)
         except Exception as e:
             job.status = 'Job Error: ' + e.__str__()
-        
+
         # update job status
         job.status = 'OK'
         api.checkin_job(job)

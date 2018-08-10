@@ -46,7 +46,7 @@ def main():
         job.status = 'OK'
         api.checkin_job(job)
         job.cleanup()
-        logging.info("### JOB END ###")
+        logging.info("### JOB END %s ###" % job.recordingId)
 
     os.unlink(pid_file)
 

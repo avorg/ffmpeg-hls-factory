@@ -22,10 +22,8 @@ def main():
     pid = str(os.getpid())
     pid_file = "/tmp/encoder.pid"
 
+    # encoder is still running
     if os.path.isfile(pid_file):
-
-        # encoder is still running
-        logging.warning("%s already exists, exiting" % pid_file)
         sys.exit()
 
     file(pid_file, 'w').write(pid)

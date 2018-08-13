@@ -39,11 +39,11 @@ def main():
             job.download_file()
             job.generate_hls(api)
             job.generate_mp4(api)
+            # update job status
+            job.status = 'OK'
         except Exception as e:
             job.status = 'Job Error: ' + e.__str__()
 
-        # update job status
-        job.status = 'OK'
         api.checkin_job(job)
         job.cleanup()
         logging.info("### JOB END %s ###" % job.recordingId)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import ConfigParser, logging,urllib, json, subprocess
-import boto,os, shutil
+import boto3, os, shutil
 
 class Job(object):
 
@@ -73,8 +73,6 @@ class Job(object):
         self.remote_dir_hls = config.get('Encoder', 'remote_dir_hls')
         self.output_dir_mp4 = config.get('Encoder', 'output_dir_mp4')
         self.s3_bucket = config.get('AWS_S3', 'Bucket')
-        self.s3_access = config.get('AWS_S3', 'ACCESS_KEY_ID')
-        self.s3_secret = config.get('AWS_S3', 'SECRET_ACCESS_KEY')
         self.ios_playlist = ''
         self.web_playlist = ''
         self.mp4_file_name = ''
@@ -272,17 +270,11 @@ class Job(object):
     def transfer_S3_playlist(self, fileName):
         try:
             logging.info('S3 TRANSFER PLAYLIST: uploading files to bucket %s' % (self.s3_bucket))
-            conn = boto.connect_s3(self.s3_access,self.s3_secret)
-            bucket = conn.get_bucket(self.s3_bucket)
-
-            logging.info('S3 TRANSFER: PLAYLIST')
             # Upload index playlist
-            k = boto.s3.key.Key(bucket)
-            k.key = os.path.join(self.destinationURL, fileName)
-            k.set_contents_from_filename(os.path.join(fileName))
-            k.set_acl('public-read')
+            s3 = boto3.resource('s3')
+            s3.meta.client.upload_file(os.path.join(fileName), self.s3_bucket, os.path.join(self.destinationURL, fileName), ExtraArgs={'ACL':'public-read'})
 
-        except boto.exception.S3ResponseError as e:
+        except boto3.exception.S3ResponseError as e:
             # 403 Forbidden, 404 Not Found
             logging.error(e)
             raise Exception('S3 TRANSFER: error: ' + e)
@@ -292,24 +284,18 @@ class Job(object):
     def transfer_S3(self, output_dir, destination):
         try:
             logging.info('S3 TRANSFER %s: uploading files to bucket %s' % (output_dir, self.s3_bucket))
-            conn = boto.connect_s3(self.s3_access,self.s3_secret)
-            bucket = conn.get_bucket(self.s3_bucket)
 
             upload_file_names = []
             for (output_dir, dirname, filename) in os.walk(output_dir):
                 upload_file_names.extend(filename)
                 break
 
+            s3 = boto3.resource('s3')
+
             for filename in upload_file_names:
-                source_path = os.path.join(output_dir + filename)
-                dest_path = os.path.join(destination, filename)
+                s3.meta.client.upload_file(os.path.join(output_dir + filename), self.s3_bucket, os.path.join(destination, filename), ExtraArgs={'ACL':'public-read'})
 
-                k = boto.s3.key.Key(bucket)
-                k.key = dest_path
-                k.set_contents_from_filename(source_path)
-                k.set_acl('public-read')
-
-        except boto.exception.S3ResponseError as e:
+        except boto3.exception.S3ResponseError as e:
             # 403 Forbidden, 404 Not Found
             logging.error(e)
             raise Exception('S3 TRANSFER: error: ' + e)

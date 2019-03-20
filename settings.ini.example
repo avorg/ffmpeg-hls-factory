@@ -5,19 +5,45 @@ Password: <basic authentication password>
 Fetchjob: <RESTful URL that fetches JSON job description /encoder/job>
 SlaveId: 1
 
+[WorldAPI]
+URL: <url>
+CheckInMP4URL: <path>
+Token: <token>
+
 [Encoder]
 log_file: encoder.log
 ffmpeg: bin/ffmpeg
 ffprobe: bin/ffprobe
-audio_encoder: libmp3lame
+ffprobe_params: %s -v error -show_entries stream=width,height,bit_rate,duration -of default=noprint_wrappers=1 %s
+audio_encoder: libfdk_aac
 segment_length: 9
 output_dir: hls/
-hls_audio: %s -y -i %s -c:a %s -ar 48k -ab 64k -vn -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
+output_dir_mp4: mp4/
+remote_dir_hls: hls/
+
+hls_audio: %s -y -i %s -c:a %s -ar 44100 -ab 64k -vn -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
 audio_bandwidth: 64000
-hls_cell: %s -y -i %s -c:a %s -ar 48k -ab 64k -c:v libx264 -vf scale=640:-1 -b:v 600k -r 29.97 -g 90 -profile:v baseline -level 3.0 -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
-cell_bandwidth: 664000
-hls_wifi: %s -y -i %s -c:a %s -ar 48k -ab 96k -c:v libx264 -vf scale=640:-1 -b:v 1200k -r 29.97 -g 90 -profile:v main -level 3.1 -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
-wifi_bandwidth: 1296000
+audio_name: Audio
+
+hls_cell: %s -y -i %s -c:a %s -ar 44100 -ab 64k -c:v libx264 -b:v 200K -pix_fmt yuv420p -maxrate 264K -bufsize 1M -vf scale=352:trunc(ow/a/2)*2 -crf 18 -r 23.98 -g 30 -profile:v main -level 3.0 -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
+cell_bandwidth: 260000
+cell_name: Low
+mp4_240: %s -y -i %s -c:a %s -ar 44100 -ab 64k -c:v libx264 -b:v 200K -pix_fmt yuv420p -maxrate 264K -bufsize 1M -vf scale=352:trunc(ow/a/2)*2 -threads 0 -profile:v main -level 3.0 -preset slow -f mp4 %s.mp4
+
+hls_wifi_360: %s -y -i %s -c:a %s -ar 44100 -ab 64k -c:v libx264 -b:v 800K -pix_fmt yuv420p -maxrate 864K -bufsize 1270K -vf scale=640:trunc(ow/a/2)*2 -crf 18 -r 23.98 -g 30 -profile:v main -level 3.1 -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
+wifi_360_bandwidth: 800000
+wifi_360_name: Medium
+mp4_360: %s -y -i %s -c:a %s -ar 44100 -ab 64k -c:v libx264 -profile:v high -preset slow -b:v 800K -pix_fmt yuv420p -maxrate 864K -bufsize 1270K -vf scale=640:trunc(ow/a/2)*2 -threads 0 -f mp4 %s.mp4
+
+hls_wifi_720: %s -y -i %s -c:a %s -ar 44100 -ab 128k -c:v libx264 -b:v 5M  -pix_fmt yuv420p -maxrate 5128k -bufsize 10256K -vf scale=1280:trunc(ow/a/2)*2 -crf 18 -r 23.98 -g 72 -profile:v main -level 3.1 -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
+wifi_720_bandwidth: 5000000
+wifi_720_name: High
+mp4_720: %s -y -i %s -c:a %s -ar 44100 -ab 128k -c:v libx264 -profile:v high -preset slow -b:v 5M -pix_fmt yuv420p -maxrate 5128k -bufsize 10256K -vf scale=1280:trunc(ow/a/2)*2 -threads 0 -f mp4 %s.mp4
+
+hls_wifi_1080: %s -y -i %s -c:a %s -ar 44100 -ab 128k -c:v libx264 -b:v 8600K -pix_fmt yuv420p -maxrate 8728K -bufsize 17456K -vf scale=1920:trunc(ow/a/2)*2 -r 23.98 -g 90 -profile:v main -level 3.1 -f hls -hls_time 9 -hls_list_size 0 %s_.m3u8
+wifi_1080_bandwidth: 8000000
+wifi_1080_name: HD
+mp4_1080: %s -y -i %s -c:a %s -ar 44100 -ab 128k -c:v libx264 -profile:v high -preset slow -b:v 8600K -pix_fmt yuv420p -maxrate 8728K -bufsize 17456K -vf scale=1920:trunc(ow/a/2)*2 -threads 0 -f mp4 %s.mp4
 
 [AWS_S3]
 Bucket: <s3 bucket>

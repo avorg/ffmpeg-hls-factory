@@ -8,5 +8,6 @@
 - curl -O https://bootstrap.pypa.io/get-pip.py
 - python get-pip.py --user
 - pip install boto3 --user
+- configure your aws [credentials file](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html)
 - cd ffmpeg-hls-factory
 - python encoder.py &

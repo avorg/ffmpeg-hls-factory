@@ -1,5 +1,7 @@
 # ffmpeg-hls-factory
+
 ## Installation on EC2
+
 - yum install git
 - git clone https://github.com/AVORG/ffmpeg-hls-factory
 - wget ffmpeg (check latest version [here](https://johnvansickle.com/ffmpeg/))
@@ -11,3 +13,9 @@
 - configure your aws [credentials file](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html)
 - cd ffmpeg-hls-factory
 - python encoder.py &
+
+## Configuring to run automatically
+
+`crontab -e` and then add the following line:
+
+`*/30 * * * * python /home/ec2-user/ffmpeg-hls-factory/encoder.py`

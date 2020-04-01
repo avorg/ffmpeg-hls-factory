@@ -7,9 +7,8 @@
 # 4. Generate main m3u8 files
 # 5. Upload video to S3
 # 6. Report job complete
-import logging, os, sys, ConfigParser
+import logging, os, ConfigParser
 from api import ApiManager
-from datetime import datetime, timedelta
 
 
 def main():
@@ -24,7 +23,7 @@ def main():
 
     # encoder is still running
     if os.path.isfile(pid_file):
-        sys.exit()
+        return
 
     file(pid_file, 'w').write(pid)
 

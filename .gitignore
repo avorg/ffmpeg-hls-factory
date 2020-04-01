@@ -6,3 +6,5 @@ hls/
 .idea/
 settings.ini
 ./encoder.log
+.coverage
+/venv

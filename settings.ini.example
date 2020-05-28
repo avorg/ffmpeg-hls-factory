@@ -17,7 +17,7 @@ ffprobe: bin/ffprobe
 ffprobe_params: %s -v error -show_entries stream=width,height,bit_rate,duration -of default=noprint_wrappers=1 %s
 audio_encoder: libfdk_aac
 segment_length: 9
-output_dir: hls/
+output_dir_hls: hls/
 output_dir_mp4: mp4/
 remote_dir_hls: hls/
 

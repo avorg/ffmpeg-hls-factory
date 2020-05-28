@@ -2,14 +2,17 @@ import ConfigParser
 import logging
 import os
 import shutil
-import sys
+import subprocess
+import traceback
 import unittest
+import urllib
 import urllib2
 import mock
 
 
 class TestCase(unittest.TestCase):
     _patchers = []
+    _config_data = {}
 
     def setUp(self):
         super(TestCase, self).setUp()
@@ -19,17 +22,46 @@ class TestCase(unittest.TestCase):
         self.addCleanup(self.cleanup)
 
     def _prepare_mocks(self):
+        self._prepare_os_mock()
+        self._prepare_logging_mocks()
+        self._prepare_config_mocks()
+        self._mock_urllib2 = self._get_patched_mock(urllib2, 'api.urllib2')
+        self._mock_urllib = self._get_patched_mock(urllib, 'job.urllib')
+        self._mock_shutil = self._get_patched_mock(shutil, 'job.shutil')
+        self._prepare_subprocess_mocks()
+
+    def _prepare_os_mock(self):
         self._mock_os = self._get_patched_mock(
             os,
             'encoder.os',
             'job.os'
         )
+
+        self._mock_os.linesep = os.linesep
+
+    def _prepare_subprocess_mocks(self):
+        self._mock_subprocess = self._get_patched_mock(subprocess, 'job.subprocess')
+        self._mock_popen = self._build_mock(subprocess.Popen)
+
+        self._mock_subprocess.Popen.return_value = self._mock_popen
+        self._mock_popen.communicate.return_value = ('out', 'err')
+
+    def _prepare_logging_mocks(self):
         self._mock_logging = self._get_patched_mock(logging, 'encoder.logging')
-        self._prepare_config_mocks()
-        self._mock_urllib2 = self._get_patched_mock(urllib2, 'api.urllib2')
-        self._mock_shutil = self._get_patched_mock(shutil, 'job.shutil')
+
+        def log_error(m):
+            log(m)
+            print(traceback.format_exc())
+
+        def log(m):
+            print m
+
+        self._mock_logging.info.side_effect = log
+        self._mock_logging.error.side_effect = log_error
 
     def _prepare_config_mocks(self):
+        defaults = ConfigParser.ConfigParser()
+        defaults.read('../settings.ini.example')
         self._mock_config_module = self._get_patched_mock(
             ConfigParser,
             'encoder.ConfigParser',
@@ -38,6 +70,26 @@ class TestCase(unittest.TestCase):
         )
         self._mock_config = self._build_mock(ConfigParser.ConfigParser)
         self._mock_config_module.ConfigParser.return_value = self._mock_config
+
+        def look_up(section, key):
+            if section not in self._config_data:
+                raise ConfigParser.NoSectionError(section)
+
+            if key not in self._config_data[section]:
+                return defaults.get(section, key)
+
+            if self._config_data[section] is None:
+                raise ConfigParser.NoOptionError(key, section)
+
+            return self._config_data[section][key]
+
+        self._mock_config.get.side_effect = look_up
+
+    def _set_config_values(self, section, **pairs):
+        if section not in self._config_data:
+            self._config_data[section] = {}
+
+        self._config_data[section].update(pairs)
 
     def _get_patched_mock(self, class_, *targets):
         mock_ = self._build_mock(class_)

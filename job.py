@@ -84,7 +84,6 @@ class Job(object):
             os.makedirs(self.output_dir_mp4)
 
     def download_file(self):
-
         opener = urllib.URLopener()
         try:
             full_path = self.downloadHostname + self.downloadPath + self.fileName
@@ -108,11 +107,13 @@ class Job(object):
 
             if width >= self.hls_config[key]['width']:
                 logging.info('GENERATE HLS: generating %s' % self.hls_config[key]['width'])
-                cmd = (self.hls_config[key]['profile'] % (
-                    self.ffmpeg,
-                    self.fileName,
-                    self.audio_encoder,
-                    self.output_dir_hls+key)
+                cmd = (
+                    self.hls_config[key]['profile'] % (
+                        self.ffmpeg,
+                        self.fileName,
+                        self.audio_encoder,
+                        self.output_dir_hls+key
+                    )
                 ).split()
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = p.communicate()
@@ -307,9 +308,9 @@ class Job(object):
         media_info = {}
         cmd = (self.ffprobe_params % (self.ffprobe, fileName)).split()
         logging.info('MEDIA PROBE: Probing %s' % fileName)
+        print cmd, subprocess.PIPE, subprocess.PIPE
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
-        #print out
         for line in out.split(os.linesep):
             if line.strip():
                 name, value = line.partition("=")[::2]
@@ -318,7 +319,7 @@ class Job(object):
                     if ( value == 'N/A'):
                         value = 0
                     media_info[name.strip()] = value
-        logging.info('MEDIA PROBE: END');
+        logging.info('MEDIA PROBE: END')
         return media_info
         
     def cleanup(self):

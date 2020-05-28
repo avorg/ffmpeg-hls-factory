@@ -8,6 +8,7 @@
 # 5. Upload video to S3
 # 6. Report job complete
 import logging, os, ConfigParser
+
 from api import ApiManager
 
 
@@ -27,10 +28,9 @@ def main():
 
     file(pid_file, 'w').write(pid)
 
-    # Get job from api
     api = ApiManager()
     job = api.get_job()
-    #job = api.getLocalJob()
+    # job = api.getLocalJob()
 
     if job.id != 0:
         logging.info("### JOB START ###")
@@ -38,10 +38,10 @@ def main():
             job.download_file()
             job.generate_hls(api)
             job.generate_mp4(api)
-            # update job status
             job.status = 'OK'
         except Exception as e:
             job.status = 'Job Error: ' + e.__str__()
+            logging.error(job.status)
 
         api.checkin_job(job)
         job.cleanup()
@@ -54,7 +54,6 @@ def init(settings_file):
 
     config = ConfigParser.ConfigParser()
     config.read(settings_file)
-    # Setup Logging
     logging.basicConfig(
         filename=config.get('Encoder','log_file'),
         format='%(asctime)s %(message)s',
